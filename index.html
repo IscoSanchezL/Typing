@@ -937,30 +937,63 @@ function renderDiploma(){ const box=$id("dipBox");
 }
 function paintDip(){ const cv=$id("dip"), nm=$id("dipNm"); if(!cv||!nm) return; drawDiploma(cv,nm.value.trim()); $id("dipDl").disabled=!nm.value.trim(); }
 function fitText(ctx,text,maxW,size,weight){ let f=size; do{ ctx.font=`${weight} ${f}px Andika, "Comic Sans MS", sans-serif`; f-=2; }while(ctx.measureText(text).width>maxW && f>30); }
+function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+function circuit(c,pts,color){ c.strokeStyle=color; c.lineWidth=6; c.lineCap="round"; c.lineJoin="round"; c.beginPath(); c.moveTo(pts[0][0],pts[0][1]); pts.slice(1).forEach(p=>c.lineTo(p[0],p[1])); c.stroke();
+  const e=pts[pts.length-1]; c.fillStyle="#fff"; c.beginPath(); c.arc(e[0],e[1],13,0,Math.PI*2); c.fill(); c.lineWidth=6; c.stroke();
+  c.fillStyle=color; c.beginPath(); c.arc(e[0],e[1],5,0,Math.PI*2); c.fill(); }
 function drawDiploma(cv,name){
   const c=cv.getContext('2d'), W=cv.width, H=cv.height, F='Andika, "Comic Sans MS", sans-serif';
-  c.clearRect(0,0,W,H); c.fillStyle='#FFFDF4'; c.fillRect(0,0,W,H);
-  c.strokeStyle='#D9A21E'; c.lineWidth=16; c.strokeRect(34,34,W-68,H-68);
-  c.strokeStyle='#1F3E7C'; c.lineWidth=4; c.strokeRect(66,66,W-132,H-132);
-  c.font=`44px ${F}`; c.textAlign='center'; c.textBaseline='middle';
-  [[W-130,130],[130,H-130],[W-130,H-130]].forEach(([x,y])=>c.fillText('⌨️',x,y));
-  if(LOGO.complete && LOGO.naturalWidth){ const h=210, w=h*LOGO.naturalWidth/LOGO.naturalHeight; c.drawImage(LOGO,100,92,w,h); }
-  c.textBaseline='alphabetic'; c.fillStyle='#1F2A44';
-  c.font=`700 118px ${F}`; c.fillText('Diploma',W/2,215);
-  c.fillStyle='#1F3E7C'; c.font=`700 52px ${F}`; c.fillText('Explorador de Teclado',W/2,300);
-  c.fillStyle='#1F2A44'; c.font=`400 40px ${F}`; c.fillText('Se entrega con orgullo a',W/2,410);
-  c.strokeStyle='#1F2A44'; c.lineWidth=4; c.beginPath(); c.moveTo(300,560); c.lineTo(W-300,560); c.stroke();
-  if(name){ c.fillStyle='#C8102E'; fitText(c,name,W-640,96,700); c.fillText(name,W/2,540); }
-  c.fillStyle='#1F2A44'; c.font=`400 38px ${F}`;
-  c.fillText('por conocer las letras, los números y las teclas especiales,',W/2,650);
-  c.fillText('y escribir su nombre en el teclado.',W/2,700);
-  c.font=`700 52px ${F}`; c.fillText(`⭐ ${dipStars()} estrellas`,W/2,800);
-  c.lineWidth=3; c.beginPath(); c.moveTo(W/2-230,955); c.lineTo(W/2+230,955); c.stroke();
-  c.font=`400 30px ${F}`; c.fillText('Profesor de Tecnología',W/2,995);
+  const P="#7B5CD6", SKY="#3AA7E8", LEAF="#3DBE7A", SUN="#FFC93C", TOM="#FF6B5B", ORA="#FF9A3C", INK="#1F2A44";
+  c.clearRect(0,0,W,H); c.fillStyle="#FFFFFF"; c.fillRect(0,0,W,H);
+  // cuadrícula de puntos
+  c.fillStyle="#E4ECF4"; for(let x=70;x<W-50;x+=40) for(let y=70;y<H-50;y+=40){ c.beginPath(); c.arc(x,y,2.4,0,Math.PI*2); c.fill(); }
+  // marco con degradado
+  const g=c.createLinearGradient(0,0,W,H); g.addColorStop(0,P); g.addColorStop(.5,SKY); g.addColorStop(1,LEAF);
+  c.strokeStyle=g; c.lineWidth=14; rr(c,30,30,W-60,H-60,44); c.stroke();
+  c.strokeStyle="#DCE6EF"; c.lineWidth=3; rr(c,56,56,W-112,H-112,30); c.stroke();
+  // circuitos en las esquinas
+  circuit(c,[[W-56,210],[W-150,210],[W-190,170],[W-190,120]],SKY);
+  circuit(c,[[W-56,280],[W-110,280],[W-110,330]],P);
+  circuit(c,[[W-215,56],[W-215,92],[W-245,122]],LEAF);
+  circuit(c,[[56,H-230],[140,H-230],[180,H-190],[180,H-150]],LEAF);
+  circuit(c,[[56,H-300],[100,H-300],[100,H-350]],TOM);
+  circuit(c,[[270,H-56],[270,H-100],[310,H-140]],SUN);
+  // logo
+  if(LOGO.complete && LOGO.naturalWidth){ const h=190, w=h*LOGO.naturalWidth/LOGO.naturalHeight; c.drawImage(LOGO,100,86,w,h); }
+  // título en teclas
+  const word="DIPLOMA", cols=[P,TOM,SKY,LEAF,ORA,SUN,P], k=118, gap=14, tw=word.length*k+(word.length-1)*gap; let x0=(W-tw)/2+40; const y0=92;
+  c.textAlign="center"; c.textBaseline="middle";
+  [...word].forEach((ch,i)=>{ const x=x0+i*(k+gap);
+    c.fillStyle="rgba(0,0,0,.18)"; rr(c,x,y0+12,k,k,22); c.fill();
+    c.fillStyle=cols[i]; rr(c,x,y0,k,k,22); c.fill();
+    c.fillStyle="rgba(255,255,255,.22)"; rr(c,x+10,y0+8,k-20,k*0.42,14); c.fill();
+    c.fillStyle=cols[i]===SUN?INK:"#fff"; c.font=`700 76px ${F}`; c.fillText(ch,x+k/2,y0+k/2+4); });
+  // subtítulo
+  c.fillStyle=INK; c.font=`700 64px ${F}`; c.fillText("Explorador de Teclado",W/2+40,312);
+  const ug=c.createLinearGradient(W/2-260,0,W/2+340,0); ug.addColorStop(0,P); ug.addColorStop(.5,SKY); ug.addColorStop(1,LEAF);
+  c.fillStyle=ug; rr(c,W/2-220,356,520,10,5); c.fill();
+  // entrega
+  c.fillStyle="#4F5B78"; c.font=`400 36px ${F}`; c.fillText("Se entrega con orgullo a",W/2,420);
+  // nombre en un campo de texto
+  const bx=300, bw=W-600, by=455, bh=140;
+  c.fillStyle="#F3F0FF"; rr(c,bx,by,bw,bh,28); c.fill(); c.strokeStyle=P; c.lineWidth=5; rr(c,bx,by,bw,bh,28); c.stroke();
+  if(name){ c.fillStyle="#5B3FD0"; fitText(c,name,bw-120,92,700); const nw=c.measureText(name).width; c.fillText(name,W/2,by+bh/2+4);
+    c.fillStyle=P; rr(c,W/2+nw/2+14,by+30,8,bh-60,4); c.fill(); }
+  // descripción
+  c.fillStyle=INK; c.font=`400 36px ${F}`;
+  c.fillText("por conocer las letras, los números y las teclas especiales,",W/2,660);
+  c.fillText("y escribir su nombre en el teclado.",W/2,708);
+  // insignia de estrellas
+  const st=`⭐ ${dipStars()} estrellas`; c.font=`700 48px ${F}`; const sw=c.measureText(st).width+80;
+  c.fillStyle="#FFF4CC"; rr(c,(W-sw)/2,760,sw,88,44); c.fill(); c.strokeStyle=SUN; c.lineWidth=4; rr(c,(W-sw)/2,760,sw,88,44); c.stroke();
+  c.fillStyle=INK; c.fillText(st,W/2,806);
+  // firma y datos
+  c.strokeStyle=INK; c.lineWidth=3; c.beginPath(); c.moveTo(W/2-230,960); c.lineTo(W/2+230,960); c.stroke();
+  c.textBaseline="alphabetic"; c.fillStyle=INK; c.font=`400 30px ${F}`; c.fillText("Profesor de Tecnología",W/2,1000);
   const date=new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'});
-  c.textAlign='left'; c.fillText(date,110,1040);
-  c.textAlign='right'; c.fillText('GI School, Tecnología grado 1',W-110,1040);
-  c.textAlign='center';
+  c.fillStyle="#4F5B78"; c.textAlign="left"; c.fillText(date,110,1040);
+  c.textAlign="right"; c.fillText("GI School, Tecnología grado 1",W-110,1040);
+  c.textAlign="center";
 }
 function downloadDip(){ const n=$id("dipNm").value.trim(); if(!n) return; const cv=$id("dip"); drawDiploma(cv,n);
   const base='diploma-teclado-'+n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
