@@ -977,8 +977,7 @@ function drawDiploma(cv,name){
   // nombre en un campo de texto
   const bx=300, bw=W-600, by=455, bh=140;
   c.fillStyle="#F3F0FF"; rr(c,bx,by,bw,bh,28); c.fill(); c.strokeStyle=P; c.lineWidth=5; rr(c,bx,by,bw,bh,28); c.stroke();
-  if(name){ c.fillStyle="#5B3FD0"; fitText(c,name,bw-120,92,700); const nw=c.measureText(name).width; c.fillText(name,W/2,by+bh/2+4);
-    c.fillStyle=P; rr(c,W/2+nw/2+14,by+30,8,bh-60,4); c.fill(); }
+  if(name){ c.fillStyle="#5B3FD0"; fitText(c,name,bw-120,92,700); c.fillText(name,W/2,by+bh/2+4); }
   // descripción
   c.fillStyle=INK; c.font=`400 36px ${F}`;
   c.fillText("por conocer las letras, los números y las teclas especiales,",W/2,660);
