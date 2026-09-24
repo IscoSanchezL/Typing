@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Conoce el teclado</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap" rel="stylesheet">
@@ -923,7 +924,7 @@ function renderDiploma(){ const box=$id("dipBox");
     <div class="namebox"><input id="dipNm" maxlength="40" autocomplete="off" placeholder="Mi nombre" aria-label="Tu nombre"></div>
     <p class="hint" style="margin-top:14px"><b>2.</b> Mira tu diploma y descárgalo.</p>
     <canvas id="dip" width="1600" height="1130" class="dipcanvas" aria-label="Vista previa del diploma"></canvas>
-    <div class="actions" style="justify-content:center"><button class="big-btn sun" id="dipDl">⬇️ Descarga tu diploma</button></div>
+    <div class="actions" style="justify-content:center"><button class="big-btn sun" id="dipDl">⬇️ Descarga tu diploma en PDF</button></div>
     <p class="hint" id="dipMsg"></p></div>`;
   const nm=$id("dipNm"); nm.value=dipName||nameTxt.trim();
   nm.oninput=()=>{ dipName=nm.value; paintDip(); saveProgress(); };
@@ -932,7 +933,7 @@ function renderDiploma(){ const box=$id("dipBox");
   const ready=[]; if(document.fonts&&document.fonts.load) ready.push(document.fonts.load('700 60px Andika'),document.fonts.load('400 40px Andika'));
   if(!LOGO.complete) ready.push(new Promise(r=>{LOGO.onload=r; LOGO.onerror=r;}));
   Promise.all(ready).then(paintDip,paintDip);
-  confetti(); say("¡Felicitaciones! Ya eres explorador del teclado, nivel uno. Revisa tu nombre y descarga tu diploma.");
+  confetti(); say("¡Felicitaciones! Ya eres Explorador de Teclado. Revisa tu nombre y descarga tu diploma.");
 }
 function paintDip(){ const cv=$id("dip"), nm=$id("dipNm"); if(!cv||!nm) return; drawDiploma(cv,nm.value.trim()); $id("dipDl").disabled=!nm.value.trim(); }
 function fitText(ctx,text,maxW,size,weight){ let f=size; do{ ctx.font=`${weight} ${f}px Andika, "Comic Sans MS", sans-serif`; f-=2; }while(ctx.measureText(text).width>maxW && f>30); }
@@ -946,7 +947,7 @@ function drawDiploma(cv,name){
   if(LOGO.complete && LOGO.naturalWidth){ const h=210, w=h*LOGO.naturalWidth/LOGO.naturalHeight; c.drawImage(LOGO,100,92,w,h); }
   c.textBaseline='alphabetic'; c.fillStyle='#1F2A44';
   c.font=`700 118px ${F}`; c.fillText('Diploma',W/2,215);
-  c.fillStyle='#1F3E7C'; c.font=`700 52px ${F}`; c.fillText('de explorador del teclado, nivel 1',W/2,300);
+  c.fillStyle='#1F3E7C'; c.font=`700 52px ${F}`; c.fillText('Explorador de Teclado',W/2,300);
   c.fillStyle='#1F2A44'; c.font=`400 40px ${F}`; c.fillText('Se entrega con orgullo a',W/2,410);
   c.strokeStyle='#1F2A44'; c.lineWidth=4; c.beginPath(); c.moveTo(300,560); c.lineTo(W-300,560); c.stroke();
   if(name){ c.fillStyle='#C8102E'; fitText(c,name,W-640,96,700); c.fillText(name,W/2,540); }
@@ -962,10 +963,23 @@ function drawDiploma(cv,name){
   c.textAlign='center';
 }
 function downloadDip(){ const n=$id("dipNm").value.trim(); if(!n) return; const cv=$id("dip"); drawDiploma(cv,n);
-  const file='diploma-teclado-'+n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.png';
+  const base='diploma-teclado-'+n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const done=()=>{ $id("dipMsg").textContent="✅ ¡Listo! Tu diploma se descargó."; say("¡Listo! Tu diploma se descargó. Ahora cierra tu cuenta con el botón rojo."); };
+  const lib=window.jspdf&&window.jspdf.jsPDF;
+  if(lib){
+    try{
+      const pdf=new lib({orientation:"landscape",unit:"mm",format:"a4"});
+      const W=pdf.internal.pageSize.getWidth(), H=pdf.internal.pageSize.getHeight();
+      const r=cv.width/cv.height; let w=W, h=W/r; if(h>H){ h=H; w=H*r; }
+      pdf.addImage(cv.toDataURL("image/jpeg",0.95),"JPEG",(W-w)/2,(H-h)/2,w,h);
+      pdf.setProperties({title:"Diploma Explorador de Teclado - "+n});
+      pdf.save(base+".pdf"); done(); return;
+    }catch(e){}
+  }
+  // Si no hay internet para crear el PDF, se descarga como imagen
   cv.toBlob(b=>{ if(!b){ $id("dipMsg").textContent="No se pudo descargar. Pide ayuda a tu profesor."; return; }
-    const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=file; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(u),4000); $id("dipMsg").textContent="✅ ¡Listo! Tu diploma se descargó."; say("¡Listo! Tu diploma se descargó. Ahora cierra tu cuenta con el botón rojo."); },'image/png'); }
+    const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=base+'.png'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),4000); done(); $id("dipMsg").textContent="✅ Se descargó como imagen (sin internet no se pudo crear el PDF)."; },'image/png'); }
 
 /* ============ REGISTRO POR ESTUDIANTE (guardado en este computador) ============ */
 const STORE="teclado-g1-registro-v1";
